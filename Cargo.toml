@@ -21,3 +21,16 @@ crossbeam-channel = "0.5"
 
 [dev-dependencies]
 tempfile = "3.25.0"
+
+
+[profile.release]
+opt-level = 3
+debug = false
+debug-assertions = false
+overflow-checks = false
+strip = true
+lto = true
+codegen-units = 1
+panic = 'abort'
+incremental = false
+rpath = false

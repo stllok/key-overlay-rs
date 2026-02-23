@@ -141,7 +141,8 @@ pub fn ensure_config_exists(path: &Path) -> Result<AppConfig, AppError> {
     } else {
         // Create parent directory if needed
         if let Some(parent) = path.parent()
-            && !parent.as_os_str().is_empty() && !parent.exists()
+            && !parent.as_os_str().is_empty()
+            && !parent.exists()
         {
             fs::create_dir_all(parent)?;
         }

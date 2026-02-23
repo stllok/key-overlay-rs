@@ -5,8 +5,9 @@
 ## Project Overview
 
 - **Language**: Rust (Edition 2024)
-- **Type**: Native application
+- **Type**: Native keyboard overlay application
 - **Package Manager**: Cargo
+- **Stack**: egui + egui_overlay for UI, rdev for input capture
 
 ---
 
@@ -76,6 +77,54 @@ cargo fmt -- --check
 # Generate and open documentation
 cargo doc --open
 ```
+
+---
+
+## Structure
+
+```
+src/
+├── main.rs              # Binary entry point (CLI + app bootstrap)
+├── lib.rs               # Library root - declares 14 public modules
+├── app.rs               # Main application state & lifecycle
+├── bars.rs              # Key bar visualization
+├── cli.rs               # CLI argument parsing (clap)
+├── color.rs             # Color handling & parsing
+├── config.rs            # Configuration loading (TOML)
+├── fading.rs            # Fade animation logic
+├── font.rs              # Font loading
+├── key_map.rs           # Key name mapping
+├── layout.rs            # Overlay layout calculations
+├── logging.rs           # Tracing setup
+├── renderer.rs          # egui rendering
+├── types.rs             # Core types (InputEvent, AppError)
+├── watcher.rs           # Config file watcher
+└── input/               # Input backend abstraction (see input/AGENTS.md)
+    ├── mod.rs
+    ├── backend.rs       # InputBackend trait + MockBackend
+    ├── key_mapping.rs   # Platform key code translation
+    └── rdev_backend.rs  # rdev-based platform implementation
+
+tests/
+└── integration.rs       # Integration tests
+
+config.toml              # Runtime configuration (user-editable)
+```
+
+---
+
+## Where to Look
+
+| Task | Location | Notes |
+|------|----------|-------|
+| Add new CLI flag | `src/cli.rs` | Uses clap derive macros |
+| Modify overlay appearance | `src/renderer.rs`, `src/bars.rs` | egui painting |
+| Change fade behavior | `src/fading.rs` | Fade animation logic |
+| Add config option | `src/config.rs` + `config.toml` | TOML-based, hot-reload via watcher |
+| Handle new input type | `src/input/` | Add to InputBackend impl |
+| Add new error variant | `src/types.rs` | AppError enum |
+| Adjust key display | `src/key_map.rs` | Key name mappings |
+| Platform-specific input | `src/input/rdev_backend.rs` | rdev integration |
 
 ---
 
@@ -211,6 +260,9 @@ pub struct KeyEvent {
 
 ### Test Organization
 
+- Unit tests: `#[cfg(test)]` modules within source files (config.rs, types.rs, bars.rs)
+- Integration tests: `tests/integration.rs`
+
 ```rust
 #[cfg(test)]
 mod tests {
@@ -218,43 +270,15 @@ mod tests {
 
     #[test]
     fn test_key_event_creation() {
-        // Arrange
-        let code = KeyCode::from(65);
-        
-        // Act
-        let event = KeyEvent::new(code, KeyState::Pressed);
-        
-        // Assert
-        assert!(event.is_pressed());
+        // Arrange-Act-Assert pattern
     }
 }
 ```
 
 ### Test Naming
 
-- Test names should describe what is being tested: `test_<function>_<scenario>_<expected_result>`
+- Format: `test_<function>_<scenario>_<expected_result>`
 - Example: `test_parse_config_missing_file_returns_error`
-
-### Test Structure
-
-Follow Arrange-Act-Assert pattern. Keep tests focused on one behavior each.
-
----
-
-## Module Structure
-
-```
-src/
-├── main.rs          # Binary entry point
-├── lib.rs           # Library root (if applicable)
-├── config.rs        # Configuration handling
-├── error.rs         # Error types
-├── key_handler.rs   # Keyboard event handling
-└── overlay/
-    ├── mod.rs       # Module declaration
-    ├── renderer.rs  # Rendering logic
-    └── window.rs    # Window management
-```
 
 ---
 
@@ -266,10 +290,44 @@ Run `cargo clippy` frequently. Treat warnings as errors:
 cargo clippy --all-targets -- -D warnings
 ```
 
-Common lints to respect:
+Critical lints:
 - `clippy::unwrap_used` - Avoid unwrap in production code
 - `clippy::expect_used` - Avoid expect in production code
 - `clippy::panic` - Avoid explicit panic
+
+---
+
+## Anti-Patterns (THIS PROJECT)
+
+1. **Never use `unwrap()`/`expect()` in production code** - Use `?` or proper error handling
+2. **Always run `cargo fmt` before committing** - Do not argue with rustfmt
+3. **Never skip Clippy warnings** - All warnings are errors (`-D warnings`)
+
+---
+
+## Notes
+
+### Linux System Dependencies
+
+Building on Linux requires system libraries:
+
+```bash
+# Ubuntu/Debian
+sudo apt install libudev-dev libx11-dev libxtst-dev libevdev-dev
+
+# Fedora
+sudo dnf install systemd-devel libX11-devel libXtst-devel libevdev-devel
+```
+
+### Git Dependencies
+
+- `rdev` is sourced from git (`https://github.com/rustdesk-org/rdev.git`), not crates.io
+- This may affect offline builds and dependency caching
+
+### Config Hot-Reload
+
+- `config.toml` is watched at runtime via `notify-debouncer-full`
+- Changes apply without restart
 
 ---
 

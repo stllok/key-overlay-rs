@@ -16,8 +16,7 @@ use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt};
 /// be retained to keep the appender alive.
 pub fn init_logging(log_dir: &Path) -> tracing_appender::non_blocking::WorkerGuard {
     // Create log directory if it doesn't exist
-    std::fs::create_dir_all(log_dir)
-        .expect("Failed to create log directory");
+    std::fs::create_dir_all(log_dir).expect("Failed to create log directory");
 
     // Create daily rolling file appender
     let rolling_appender = RollingFileAppender::new(
@@ -40,9 +39,7 @@ pub fn init_logging(log_dir: &Path) -> tracing_appender::non_blocking::WorkerGua
 
     // Try to initialize the global default subscriber
     // If it's already set, ignore the error (common in tests)
-    let _ = tracing_subscriber::registry()
-        .with(file_layer)
-        .try_init();
+    let _ = tracing_subscriber::registry().with(file_layer).try_init();
 
     guard
 }

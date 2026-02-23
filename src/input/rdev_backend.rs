@@ -1,7 +1,7 @@
 //! rdev-based input backend for Windows, macOS, and X11.
 
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread::{self, JoinHandle};
 
 use crossbeam_channel::Sender;

@@ -4,14 +4,14 @@ use std::path::{Path, PathBuf};
 use std::thread;
 
 use anyhow::{Context as _, Result};
-use crossbeam_channel::{bounded, unbounded, Receiver, Sender};
+use crossbeam_channel::{Receiver, Sender, bounded, unbounded};
 use egui::Context;
 use egui_overlay::EguiOverlay;
 use tracing::{error, warn};
 
 use crate::config;
 use crate::input;
-use crate::renderer::{create_renderer, Renderer};
+use crate::renderer::{Renderer, create_renderer};
 use crate::types::{AppConfig, InputEvent};
 use crate::watcher::ConfigWatcher;
 

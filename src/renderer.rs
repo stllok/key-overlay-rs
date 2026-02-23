@@ -71,10 +71,9 @@ impl Renderer {
         }
 
         let mut font_definitions = FontDefinitions::default();
-        font_definitions.font_data.insert(
-            FONT_NAME.to_string(),
-            FontData::from_static(load_font()),
-        );
+        font_definitions
+            .font_data
+            .insert(FONT_NAME.to_string(), FontData::from_static(load_font()));
 
         for family in [FontFamily::Monospace, FontFamily::Proportional] {
             if let Some(fonts) = font_definitions.families.get_mut(&family) {
