@@ -3,17 +3,17 @@
 //! This library provides the core functionality for displaying keyboard events
 //! as visual overlays on the screen.
 
-pub mod types;
+pub mod app;
+pub mod bars;
+pub mod cli;
 pub mod color;
 pub mod config;
-pub mod key_map;
-pub mod bars;
-pub mod layout;
 pub mod fading;
-pub mod renderer;
-pub mod app;
-pub mod cli;
-pub mod logging;
-pub mod watcher;
 pub mod font;
 pub mod input;
+pub mod key_map;
+pub mod layout;
+pub mod logging;
+pub mod renderer;
+pub mod types;
+pub mod watcher;
