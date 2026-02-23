@@ -18,11 +18,7 @@
 ///
 /// # Returns
 /// Alpha value between 0.0 (transparent) and 1.0 (opaque)
-pub fn calculate_fade_alpha(
-    y_position: f32,
-    window_height: f32,
-    fade_height: f32,
-) -> f32 {
+pub fn calculate_fade_alpha(y_position: f32, window_height: f32, fade_height: f32) -> f32 {
     // No fade region or invalid params: fully opaque below top
     if fade_height <= 0.0 {
         return if y_position < window_height { 1.0 } else { 0.0 };

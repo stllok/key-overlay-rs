@@ -1,0 +1,53 @@
+2026-02-23T07:15:18.070542Z TRACE notify::windows: 408: Event: path = `\\?\D:\git\key-overlay-rs\logs`, action = 3
+2026-02-23T07:15:18.070632Z  INFO key_overlay_rs::watcher: 102: Config watcher started for '\\?\D:\git\key-overlay-rs\config.toml'
+2026-02-23T07:15:18.070637Z TRACE notify_debouncer_full: 266: raw event: Event { kind: Modify(Any), paths: ["\\\\?\\D:\\git\\key-overlay-rs\\logs"], attr:tracker: None, attr:flag: None, attr:info: None, attr:source: None }
+2026-02-23T07:15:18.264919Z  INFO egui_window_glfw_passthrough: 236: GlfwBackend created. 
+        physical_size: 800, 597;
+        logical_size: 800, 597;
+        virtual_size: 800, 597;
+        content_scale: 1;
+        pixels_per_virtual_unit: 1;
+        
+2026-02-23T07:15:18.268452Z DEBUG egui_render_glow::helpers: 52: created glow context
+2026-02-23T07:15:18.268462Z  WARN egui_render_glow: 124: srgb support detected by egui glow
+2026-02-23T07:15:18.268468Z  INFO egui_render_glow: 208: creating glow egui painter
+2026-02-23T07:15:18.268469Z  INFO egui_render_glow: 210: GL Version: 4.6.0 NVIDIA 582.16
+2026-02-23T07:15:18.268470Z  INFO egui_render_glow: 211: GL Renderer: GRID V100X-8Q/PCI/SSE2
+2026-02-23T07:15:18.268471Z  INFO egui_render_glow: 212: Gl Vendor: NVIDIA Corporation
+2026-02-23T07:15:18.268580Z  INFO egui_render_glow: 214: GLSL version: 4.60 NVIDIA
+2026-02-23T07:15:18.268987Z DEBUG egui_render_glow::helpers: 102: egui shader program successfully compiled and linked
+2026-02-23T07:15:18.269006Z DEBUG egui_render_glow: 236: location of uniform u_screen_size is NativeUniformLocation(1)
+2026-02-23T07:15:18.269007Z DEBUG egui_render_glow: 240: location of uniform u_sampler is NativeUniformLocation(0)
+2026-02-23T07:15:18.269047Z DEBUG egui_render_glow::helpers: 138: vin_pos vertex attribute location is 0
+2026-02-23T07:15:18.269062Z DEBUG egui_render_glow::helpers: 144: vin_tc vertex attribute location is 1
+2026-02-23T07:15:18.269064Z DEBUG egui_render_glow::helpers: 150: vin_sc vertex attribute location is 2
+2026-02-23T07:15:18.269065Z DEBUG egui_render_glow: 243: created egui vao, vbo, ebo
+2026-02-23T07:15:18.269080Z DEBUG egui_render_glow: 245: created linear and nearest samplers
+2026-02-23T07:15:18.269165Z  INFO egui_overlay: 133: entering glfw event loop
+2026-02-23T07:15:18.271297Z  WARN egui_render_glow: 483: destroying egui glow painter
+2026-02-23T07:15:18.273144Z  WARN egui_window_glfw_passthrough: 71: dropping glfw backend
+2026-02-23T07:15:18.284029Z  INFO key_overlay_rs::watcher: 114: Config watcher stopped
+2026-02-23T07:15:43.459947Z  INFO key_overlay_rs::watcher: 102: Config watcher started for '\\?\D:\git\key-overlay-rs\config.toml'
+2026-02-23T07:15:43.646280Z  INFO egui_window_glfw_passthrough: 236: GlfwBackend created. 
+        physical_size: 800, 597;
+        logical_size: 800, 597;
+        virtual_size: 800, 597;
+        content_scale: 1;
+        pixels_per_virtual_unit: 1;
+        
+2026-02-23T07:15:43.649667Z DEBUG egui_render_glow::helpers: 52: created glow context
+2026-02-23T07:15:43.649679Z  WARN egui_render_glow: 124: srgb support detected by egui glow
+2026-02-23T07:15:43.649684Z  INFO egui_render_glow: 208: creating glow egui painter
+2026-02-23T07:15:43.649685Z  INFO egui_render_glow: 210: GL Version: 4.6.0 NVIDIA 582.16
+2026-02-23T07:15:43.649686Z  INFO egui_render_glow: 211: GL Renderer: GRID V100X-8Q/PCI/SSE2
+2026-02-23T07:15:43.649687Z  INFO egui_render_glow: 212: Gl Vendor: NVIDIA Corporation
+2026-02-23T07:15:43.649692Z  INFO egui_render_glow: 214: GLSL version: 4.60 NVIDIA
+2026-02-23T07:15:43.649987Z DEBUG egui_render_glow::helpers: 102: egui shader program successfully compiled and linked
+2026-02-23T07:15:43.650004Z DEBUG egui_render_glow: 236: location of uniform u_screen_size is NativeUniformLocation(1)
+2026-02-23T07:15:43.650008Z DEBUG egui_render_glow: 240: location of uniform u_sampler is NativeUniformLocation(0)
+2026-02-23T07:15:43.650041Z DEBUG egui_render_glow::helpers: 138: vin_pos vertex attribute location is 0
+2026-02-23T07:15:43.650054Z DEBUG egui_render_glow::helpers: 144: vin_tc vertex attribute location is 1
+2026-02-23T07:15:43.650057Z DEBUG egui_render_glow::helpers: 150: vin_sc vertex attribute location is 2
+2026-02-23T07:15:43.650058Z DEBUG egui_render_glow: 243: created egui vao, vbo, ebo
+2026-02-23T07:15:43.650070Z DEBUG egui_render_glow: 245: created linear and nearest samplers
+2026-02-23T07:15:43.650149Z  INFO egui_overlay: 133: entering glfw event loop

@@ -419,7 +419,7 @@ Max Concurrent: 5 (Waves 1 & 2)
   - Files: `Cargo.toml`, `src/**/*.rs`
   - Pre-commit: `cargo check`
 
-- [ ] 3. Core Types + Error Types (TDD)
+ [x] 3. Core Types + Error Types (TDD) ✅
 
   **What to do**:
   - **TDD: Write tests FIRST, then implement.**
@@ -551,7 +551,7 @@ Max Concurrent: 5 (Waves 1 & 2)
   - Files: `src/types.rs`
   - Pre-commit: `cargo test types`
 
-- [ ] 4. Color Parsing Module (TDD)
+ [x] 4. Color Parsing Module (TDD) ✅
 
   **What to do**:
   - **TDD: Write tests FIRST, then implement.**
@@ -632,7 +632,7 @@ Max Concurrent: 5 (Waves 1 & 2)
   - Files: `src/color.rs`
   - Pre-commit: `cargo test color`
 
-- [ ] 5. TOML Config Module (TDD)
+ [x] 5. TOML Config Module (TDD) ✅
 
   **What to do**:
   - **TDD: Write tests FIRST, then implement.**
@@ -724,7 +724,7 @@ Max Concurrent: 5 (Waves 1 & 2)
   - Files: `src/config.rs`
   - Pre-commit: `cargo test config`
 
-- [ ] 6. Key Mapping Module (TDD)
+ [x] 6. Key Mapping Module (TDD) ✅
 
   **What to do**:
   - Create `src/input/key_mapping.rs` with `KeyId` enum covering keyboard keys + mouse buttons
@@ -783,7 +783,7 @@ Max Concurrent: 5 (Waves 1 & 2)
   - Files: `src/input/key_mapping.rs`, `src/input/mod.rs`
   - Pre-commit: `cargo test key_mapping`
 
-- [ ] 7. Bundle Font Asset + Font Loading
+ [x] 7. Bundle Font Asset + Font Loading ✅
 
   **What to do**:
   - Add `assets/` directory with a bundled font (Roboto Mono or similar OFL-licensed monospace font)
