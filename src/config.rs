@@ -1,5 +1,6 @@
 //! Configuration loading and validation from TOML.
 
+use std::fs;
 use std::path::Path;
 
 use serde::Deserialize;
@@ -130,9 +131,125 @@ fn parse_app_color(raw: &str, field_name: &str) -> Result<Color, AppError> {
     Ok(Color::from_rgba_u8(parsed.r, parsed.g, parsed.b, parsed.a))
 }
 
+/// Ensures config exists at the given path.
+/// If the file doesn't exist, creates it with default config.
+/// If it exists, loads it.
+/// Returns the loaded or default config.
+pub fn ensure_config_exists(path: &Path) -> Result<AppConfig, AppError> {
+    if path.exists() {
+        load_config(path)
+    } else {
+        // Create parent directory if needed
+        if let Some(parent) = path.parent()
+            && !parent.as_os_str().is_empty() && !parent.exists()
+        {
+            fs::create_dir_all(parent)?;
+        }
+
+        // Serialize default config to TOML string
+        let default_config = AppConfig::default();
+        let toml_string = serialize_config(&default_config)?;
+
+        // Write to file
+        fs::write(path, toml_string)?;
+
+        // Load and return
+        load_config(path)
+    }
+}
+
+/// Serializes AppConfig to TOML string using pretty formatting.
+fn serialize_config(config: &AppConfig) -> Result<String, AppError> {
+    let raw = RawConfigBuilder::from_app_config(config);
+    toml::to_string_pretty(&raw)
+        .map_err(|err| AppError::Config(format!("failed to serialize config: {err}")))
+}
+
+/// Helper struct to build raw config from AppConfig for serialization.
+#[derive(serde::Serialize)]
+struct RawConfigBuilder {
+    general: RawGeneralForSerialize,
+    key: Vec<RawKeyConfigForSerialize>,
+}
+
+#[derive(serde::Serialize)]
+struct RawGeneralForSerialize {
+    #[serde(rename = "height")]
+    height: f32,
+    #[serde(rename = "keySize")]
+    key_size: f32,
+    #[serde(rename = "barSpeed")]
+    bar_speed: f32,
+    #[serde(rename = "backgroundColor")]
+    background_color: String,
+    #[serde(rename = "margin")]
+    margin: f32,
+    #[serde(rename = "outlineThickness")]
+    outline_thickness: f32,
+    #[serde(rename = "fading")]
+    fading: bool,
+    #[serde(rename = "counter")]
+    counter: bool,
+    #[serde(rename = "fps")]
+    fps: u32,
+}
+
+#[derive(serde::Serialize)]
+struct RawKeyConfigForSerialize {
+    #[serde(rename = "name")]
+    name: String,
+    #[serde(rename = "color")]
+    color: String,
+    #[serde(rename = "size")]
+    size: f32,
+}
+
+impl RawConfigBuilder {
+    fn from_app_config(config: &AppConfig) -> Self {
+        let background_color_str = format!(
+            "{},{},{},{}",
+            (config.background_color.r * 255.0).round() as u8,
+            (config.background_color.g * 255.0).round() as u8,
+            (config.background_color.b * 255.0).round() as u8,
+            (config.background_color.a * 255.0).round() as u8,
+        );
+
+        let key_configs = config
+            .keys
+            .iter()
+            .map(|k| RawKeyConfigForSerialize {
+                name: k.key_name.clone(),
+                color: format!(
+                    "{},{},{},{}",
+                    (k.color.r * 255.0).round() as u8,
+                    (k.color.g * 255.0).round() as u8,
+                    (k.color.b * 255.0).round() as u8,
+                    (k.color.a * 255.0).round() as u8,
+                ),
+                size: k.size,
+            })
+            .collect();
+
+        RawConfigBuilder {
+            general: RawGeneralForSerialize {
+                height: config.height,
+                key_size: config.key_size,
+                bar_speed: config.bar_speed,
+                background_color: background_color_str,
+                margin: config.margin,
+                outline_thickness: config.outline_thickness,
+                fading: config.fading,
+                counter: config.counter,
+                fps: config.fps,
+            },
+            key: key_configs,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{load_from_str, validate_config};
+    use super::{ensure_config_exists, load_from_str, validate_config};
     use crate::types::{AppConfig, Color};
 
     fn full_valid_toml() -> &'static str {
@@ -265,5 +382,128 @@ color = "wrong"
 
         let err = load_from_str(input).expect_err("invalid key color should error");
         assert!(err.to_string().contains("key color"));
+    }
+
+    #[test]
+    fn test_ensure_config_exists_creates_file_if_missing() {
+        let temp_dir = std::env::temp_dir();
+        let config_path = temp_dir.join("test_ensure_config_create.toml");
+
+        // Clean up if it exists
+        let _ = std::fs::remove_file(&config_path);
+
+        // Verify file doesn't exist
+        assert!(!config_path.exists());
+
+        // Call ensure_config_exists
+        let config = ensure_config_exists(&config_path).expect("ensure_config_exists failed");
+
+        // Verify file was created
+        assert!(config_path.exists());
+
+        // Verify config matches defaults
+        let default = AppConfig::default();
+        assert_eq!(config.height, default.height);
+        assert_eq!(config.key_size, default.key_size);
+        assert_eq!(config.bar_speed, default.bar_speed);
+        assert_eq!(config.keys.len(), default.keys.len());
+
+        // Clean up
+        let _ = std::fs::remove_file(&config_path);
+    }
+
+    #[test]
+    fn test_ensure_config_exists_loads_existing_file() {
+        let temp_dir = std::env::temp_dir();
+        let config_path = temp_dir.join("test_ensure_config_load.toml");
+
+        // Create config with specific values
+        let custom_toml = r#"
+[general]
+height = 800
+keySize = 75
+barSpeed = 500
+backgroundColor = "255,0,0,255"
+margin = 30
+outlineThickness = 3
+fading = false
+counter = false
+fps = 30
+
+[[key]]
+name = "A"
+color = "0,255,0,255"
+size = 1.5
+"#;
+
+        std::fs::write(&config_path, custom_toml).expect("write test config failed");
+
+        // Call ensure_config_exists on existing file
+        let config = ensure_config_exists(&config_path).expect("ensure_config_exists failed");
+
+        // Verify it loaded the custom config, not defaults
+        assert_eq!(config.height, 800.0);
+        assert_eq!(config.key_size, 75.0);
+        assert_eq!(config.bar_speed, 500.0);
+        assert!(!config.fading);
+        assert!(!config.counter);
+        assert_eq!(config.fps, 30);
+        assert_eq!(config.keys.len(), 1);
+        assert_eq!(config.keys[0].key_name, "A");
+
+        // Clean up
+        let _ = std::fs::remove_file(&config_path);
+    }
+
+    #[test]
+    fn test_ensure_config_exists_creates_parent_dirs() {
+        let temp_dir = std::env::temp_dir();
+        let config_path = temp_dir.join("test_config_nested/dir/config.toml");
+
+        // Clean up if it exists
+        let _ = std::fs::remove_file(&config_path);
+        let _ = std::fs::remove_dir_all(temp_dir.join("test_config_nested"));
+
+        // Verify parent doesn't exist
+        assert!(!config_path.parent().unwrap().exists());
+
+        // Call ensure_config_exists
+        let config = ensure_config_exists(&config_path).expect("ensure_config_exists failed");
+
+        // Verify file was created with parent directories
+        assert!(config_path.exists());
+        assert_eq!(config, AppConfig::default());
+
+        // Clean up
+        let _ = std::fs::remove_dir_all(temp_dir.join("test_config_nested"));
+    }
+
+    #[test]
+    fn test_ensure_config_exists_serialized_format_is_valid_toml() {
+        let temp_dir = std::env::temp_dir();
+        let config_path = temp_dir.join("test_ensure_config_format.toml");
+
+        // Clean up if it exists
+        let _ = std::fs::remove_file(&config_path);
+
+        // Create config
+        ensure_config_exists(&config_path).expect("ensure_config_exists failed");
+
+        // Read back the file and verify it's valid TOML
+        let content = std::fs::read_to_string(&config_path).expect("read config failed");
+        let parsed = load_from_str(&content).expect("reparse failed");
+
+        // Verify it matches defaults
+        assert_eq!(parsed, AppConfig::default());
+
+        // Verify it has expected TOML structure
+        assert!(content.contains("[general]"));
+        assert!(content.contains("[[key]]"));
+        assert!(content.contains("height"));
+        assert!(content.contains("keySize"));
+        assert!(content.contains("barSpeed"));
+
+        // Clean up
+        let _ = std::fs::remove_file(&config_path);
     }
 }
