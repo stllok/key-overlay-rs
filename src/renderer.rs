@@ -176,11 +176,13 @@ impl Renderer {
                 bar.color.to_egui()
             };
 
-            let fade_alpha = if self.config.fading {
-                calculate_fade_alpha(bar.y_position + bar.height, self.config.height, fade_height)
-            } else {
-                1.0
-            };
+            let fade_alpha = bar_fade_alpha(
+                self.config.fading,
+                is_active_bar,
+                bar.y_position,
+                self.config.height,
+                fade_height,
+            );
 
             let fill_color = with_scaled_alpha(base_color, fade_alpha);
             let stroke_color = with_scaled_alpha(Color32::WHITE, fade_alpha);
@@ -305,6 +307,20 @@ fn with_scaled_alpha(color: Color32, alpha_scale: f32) -> Color32 {
     Color32::from_rgba_unmultiplied(color.r(), color.g(), color.b(), scaled)
 }
 
+fn bar_fade_alpha(
+    fading_enabled: bool,
+    is_active_bar: bool,
+    bar_y_position: f32,
+    window_height: f32,
+    fade_height: f32,
+) -> f32 {
+    if !fading_enabled || is_active_bar {
+        return 1.0;
+    }
+
+    calculate_fade_alpha(bar_y_position, window_height, fade_height)
+}
+
 fn window_size_needs_update(current: [f32; 2], desired: [f32; 2]) -> bool {
     (current[0] - desired[0]).abs() > WINDOW_SIZE_EPSILON
         || (current[1] - desired[1]).abs() > WINDOW_SIZE_EPSILON
@@ -378,5 +394,26 @@ mod tests {
             [100.0, 200.0],
             [100.0, 200.4]
         ));
+    }
+
+    #[test]
+    fn test_bar_fade_alpha_keeps_active_held_bar_fully_opaque() {
+        let alpha = super::bar_fade_alpha(true, true, 790.0, 800.0, 200.0);
+        assert_f32_eq(alpha, 1.0);
+    }
+
+    #[test]
+    fn test_bar_fade_alpha_applies_to_non_active_bars() {
+        let alpha = super::bar_fade_alpha(true, false, 790.0, 800.0, 200.0);
+        let expected = super::calculate_fade_alpha(790.0, 800.0, 200.0);
+        assert_f32_eq(alpha, expected);
+    }
+
+    #[test]
+    fn test_bar_fade_alpha_non_active_bar_starts_opaque_after_release() {
+        // Released bars start moving from y=0 regardless of hold duration,
+        // so they should not instantly fade out on release.
+        let alpha = super::bar_fade_alpha(true, false, 0.0, 800.0, 200.0);
+        assert_f32_eq(alpha, 1.0);
     }
 }
