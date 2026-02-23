@@ -10,8 +10,10 @@ use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt};
 /// # Returns
 /// A `WorkerGuard` that must be held for logging to remain active
 ///
-/// # Panics
-/// If unable to create the log directory
+/// # Note
+/// If a global default subscriber is already set, this function will still return
+/// the guard but the new subscriber won't be set globally. The guard should still
+/// be retained to keep the appender alive.
 pub fn init_logging(log_dir: &Path) -> tracing_appender::non_blocking::WorkerGuard {
     // Create log directory if it doesn't exist
     std::fs::create_dir_all(log_dir)
@@ -36,10 +38,11 @@ pub fn init_logging(log_dir: &Path) -> tracing_appender::non_blocking::WorkerGua
         .with_line_number(true)
         .with_ansi(false);
 
-    // Initialize the global default subscriber
-    tracing_subscriber::registry()
+    // Try to initialize the global default subscriber
+    // If it's already set, ignore the error (common in tests)
+    let _ = tracing_subscriber::registry()
         .with(file_layer)
-        .init();
+        .try_init();
 
     guard
 }
