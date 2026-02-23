@@ -35,6 +35,7 @@ impl std::error::Error for ColorError {}
 ///
 /// # Examples
 /// ```
+/// use key_overlay_rs::color::{Color, parse_color};
 /// assert_eq!(parse_color("255,0,128,200"), Ok(Color { r: 255, g: 0, b: 128, a: 200 }));
 /// assert_eq!(parse_color("0,0,0"), Ok(Color { r: 0, g: 0, b: 0, a: 255 }));
 /// assert!(parse_color("invalid").is_err());
@@ -76,6 +77,7 @@ pub fn parse_color(s: &str) -> Result<Color, ColorError> {
 ///
 /// # Examples
 /// ```
+/// use key_overlay_rs::color::{Color, parse_color_or_default};
 /// let default = Color { r: 0, g: 0, b: 0, a: 255 };
 /// assert_eq!(parse_color_or_default("255,0,0,255", default), Color { r: 255, g: 0, b: 0, a: 255 });
 /// assert_eq!(parse_color_or_default("invalid", default), default);
