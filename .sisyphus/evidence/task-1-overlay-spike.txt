@@ -1,0 +1,26 @@
+Task: Rendering Spike - Validate egui_overlay
+Date: 2026-02-23
+
+Research evidence:
+- Context7 library resolved: /coderedart/egui_overlay
+- GitHub examples used: coderedart/egui_overlay examples/basic and examples/icon
+- API confirmed: egui_overlay::start(app), trait EguiOverlay::gui_run(...)
+
+Build verification:
+- Command: cargo build
+- Result: success (Finished dev profile, 0 errors)
+
+Run verification:
+- Command: cargo run (15s timeout)
+- Result: process started and kept running until timeout killed it
+- stderr/stdout panic check: no panic, no window creation error in output
+
+Observed spike behavior from implementation:
+- Transparent overlay requested via egui_overlay defaults (transparent_window=true)
+- Always-on-top requested via egui_overlay defaults (window.set_floating(true))
+- Input passthrough toggled: passthrough on when egui does not request pointer/keyboard
+- Painter API used: rect_filled, rect_stroke, text
+- Frame pacing set with request_repaint_after(16ms) (~60fps target)
+
+GO/NO-GO conclusion:
+- GO: egui_overlay compiles and runs for the required duration with overlay drawing code.
