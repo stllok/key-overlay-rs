@@ -29,7 +29,7 @@ pub fn run(config_path: &Path) -> Result<()> {
         })?;
 
     let log_dir = resolve_log_dir(config_path);
-    let _log_guard = crate::logging::init_logging(&log_dir);
+    let _log_guard = crate::logging::init_logging(config.log_to_file, &log_dir);
 
     let (input_rx, input_shutdown_tx) = start_input_thread()?;
     let (config_rx, mut config_watcher) = start_config_watcher(config_path)?;

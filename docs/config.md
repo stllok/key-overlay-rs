@@ -15,6 +15,7 @@ outlineThickness = 5
 fading = true
 counter = true
 fps = 60
+logToFile = false
 
 [[key]]
 name = "Z"
@@ -42,6 +43,7 @@ The `[general]` section controls overall overlay appearance and behavior.
 | `fading` | boolean | `true` | Enable fade-out animation after key release |
 | `counter` | boolean | `true` | Show press count on each key |
 | `fps` | number | `60` | Target frame rate for rendering |
+| `logToFile` | boolean | `false` | Enable writing logs to rotating files under `logs/`; when `false`, logs are printed to console |
 
 ### Color Format
 
@@ -164,6 +166,7 @@ outlineThickness = 5.0
 fading = true
 counter = true
 fps = 60
+logToFile = false
 
 [[key]]
 name = "Z"

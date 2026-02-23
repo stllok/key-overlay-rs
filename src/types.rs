@@ -76,6 +76,7 @@ pub struct AppConfig {
     pub fading: bool,
     pub counter: bool,
     pub fps: u32,
+    pub log_to_file: bool,
     pub keys: Vec<KeyConfig>,
 }
 
@@ -91,6 +92,7 @@ impl Default for AppConfig {
             fading: true,
             counter: true,
             fps: 60,
+            log_to_file: false,
             keys: vec![
                 KeyConfig {
                     key_name: "Z".to_string(),
@@ -180,6 +182,7 @@ mod tests {
         assert!(config.fading);
         assert!(config.counter);
         assert_eq!(config.fps, 60);
+        assert!(!config.log_to_file);
         assert_eq!(config.keys.len(), 2);
 
         assert_eq!(config.keys[0].key_name, "Z");

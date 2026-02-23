@@ -8,6 +8,7 @@ outlineThickness = 5.0
 fading = true
 counter = true
 fps = 60
+logToFile = false
 
 [[key]]
 name = "Z"

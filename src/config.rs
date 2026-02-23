@@ -29,6 +29,7 @@ pub struct RawGeneral {
     pub fading: Option<bool>,
     pub counter: Option<bool>,
     pub fps: Option<u32>,
+    pub log_to_file: Option<bool>,
 }
 
 /// Raw `[[key]]` TOML section.
@@ -68,6 +69,7 @@ pub fn load_from_str(toml_str: &str) -> Result<AppConfig, AppError> {
         fading: raw.general.fading.unwrap_or(defaults.fading),
         counter: raw.general.counter.unwrap_or(defaults.counter),
         fps: raw.general.fps.unwrap_or(defaults.fps),
+        log_to_file: raw.general.log_to_file.unwrap_or(defaults.log_to_file),
         keys: if raw.key.is_empty() {
             defaults.keys
         } else {
@@ -193,6 +195,8 @@ struct RawGeneralForSerialize {
     counter: bool,
     #[serde(rename = "fps")]
     fps: u32,
+    #[serde(rename = "logToFile")]
+    log_to_file: bool,
 }
 
 #[derive(serde::Serialize)]
@@ -242,6 +246,7 @@ impl RawConfigBuilder {
                 fading: config.fading,
                 counter: config.counter,
                 fps: config.fps,
+                log_to_file: config.log_to_file,
             },
             key: key_configs,
         }
@@ -265,6 +270,7 @@ outlineThickness = 5
 fading = true
 counter = true
 fps = 60
+logToFile = false
 
 [[key]]
 name = "Z"
@@ -291,6 +297,7 @@ size = 1.0
         assert!(parsed.fading);
         assert!(parsed.counter);
         assert_eq!(parsed.fps, 60);
+        assert!(!parsed.log_to_file);
         assert_eq!(parsed.keys.len(), 2);
         assert_eq!(parsed.keys[0].key_name, "Z");
         assert_eq!(parsed.keys[1].key_name, "X");
@@ -306,6 +313,7 @@ size = 1.0
         assert_eq!(parsed.key_size, defaults.key_size);
         assert_eq!(parsed.bar_speed, defaults.bar_speed);
         assert_eq!(parsed.background_color, defaults.background_color);
+        assert_eq!(parsed.log_to_file, defaults.log_to_file);
         assert_eq!(parsed.keys, defaults.keys);
     }
 
@@ -430,6 +438,7 @@ outlineThickness = 3
 fading = false
 counter = false
 fps = 30
+logToFile = true
 
 [[key]]
 name = "A"
@@ -449,6 +458,7 @@ size = 1.5
         assert!(!config.fading);
         assert!(!config.counter);
         assert_eq!(config.fps, 30);
+        assert!(config.log_to_file);
         assert_eq!(config.keys.len(), 1);
         assert_eq!(config.keys[0].key_name, "A");
 
@@ -503,6 +513,7 @@ size = 1.5
         assert!(content.contains("height"));
         assert!(content.contains("keySize"));
         assert!(content.contains("barSpeed"));
+        assert!(content.contains("logToFile"));
 
         // Clean up
         let _ = std::fs::remove_file(&config_path);

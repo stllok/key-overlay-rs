@@ -2,21 +2,34 @@ use std::path::Path;
 use tracing_appender::rolling::RollingFileAppender;
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
-/// Initialize file logging with daily rotation.
+/// Initialize logging to either console (default) or daily-rotated files.
 ///
 /// # Arguments
-/// * `log_dir` - Directory where logs will be written
+/// * `log_to_file` - If `true`, logs are written to files under `log_dir`
+/// * `log_dir` - Directory where logs will be written when file mode is enabled
 ///
 /// # Returns
-/// A `WorkerGuard` that must be held for logging to remain active
+/// A `WorkerGuard` when file logging is enabled and initialized, otherwise `None`
 ///
 /// # Note
 /// If a global default subscriber is already set, this function will still return
 /// the guard but the new subscriber won't be set globally. The guard should still
 /// be retained to keep the appender alive.
-pub fn init_logging(log_dir: &Path) -> tracing_appender::non_blocking::WorkerGuard {
-    // Create log directory if it doesn't exist
-    std::fs::create_dir_all(log_dir).expect("Failed to create log directory");
+pub fn init_logging(
+    log_to_file: bool,
+    log_dir: &Path,
+) -> Option<tracing_appender::non_blocking::WorkerGuard> {
+    if !log_to_file {
+        return init_console_logging();
+    }
+
+    if let Err(err) = std::fs::create_dir_all(log_dir) {
+        eprintln!(
+            "Failed to create log directory '{}': {err}. Falling back to console logging.",
+            log_dir.display()
+        );
+        return init_console_logging();
+    }
 
     // Create daily rolling file appender
     let rolling_appender = RollingFileAppender::new(
@@ -41,7 +54,20 @@ pub fn init_logging(log_dir: &Path) -> tracing_appender::non_blocking::WorkerGua
     // If it's already set, ignore the error (common in tests)
     let _ = tracing_subscriber::registry().with(file_layer).try_init();
 
-    guard
+    Some(guard)
+}
+
+fn init_console_logging() -> Option<tracing_appender::non_blocking::WorkerGuard> {
+    let console_layer = fmt::layer()
+        .with_target(true)
+        .with_thread_ids(false)
+        .with_thread_names(false)
+        .with_line_number(true);
+
+    let _ = tracing_subscriber::registry()
+        .with(console_layer)
+        .try_init();
+    None
 }
 
 #[cfg(test)]
@@ -58,29 +84,21 @@ mod tests {
 
         assert!(!log_dir.exists());
 
-        let _guard = init_logging(&log_dir);
+        let guard = init_logging(true, &log_dir);
 
+        assert!(guard.is_some());
         assert!(log_dir.exists());
     }
 
     #[test]
-    fn test_init_logging_creates_log_file() {
+    fn test_init_logging_console_mode_returns_none_guard() {
         let temp_dir = TempDir::new().unwrap();
         let log_dir = temp_dir.path();
 
-        let _guard = init_logging(log_dir);
-
+        let guard = init_logging(false, log_dir);
         info!("Test message");
 
-        // Give non-blocking appender time to flush
-        std::thread::sleep(std::time::Duration::from_millis(100));
-
-        // Check that a log file was created with today's date
-        let entries = fs::read_dir(log_dir).unwrap();
-        let has_log_file = entries
-            .filter_map(Result::ok)
-            .any(|entry| entry.path().to_string_lossy().contains("key-overlay.log"));
-
-        assert!(has_log_file, "Log file should be created");
+        assert!(guard.is_none());
+        assert!(fs::read_dir(log_dir).unwrap().next().is_none());
     }
 }
