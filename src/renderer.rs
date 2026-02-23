@@ -11,7 +11,7 @@ use egui_overlay::EguiOverlay;
 use crate::bars::{BarColumn, BarManager};
 use crate::fading::calculate_fade_alpha;
 use crate::font::load_font;
-use crate::layout::calculate_key_x_positions;
+use crate::layout::{calculate_key_x_positions, calculate_window_width};
 use crate::types::{AppConfig, KeyConfig};
 
 const FONT_NAME: &str = "jetbrains-mono";
@@ -20,6 +20,7 @@ const COUNTER_TEXT_SCALE: f32 = 0.24;
 const FADE_REGION_RATIO: f32 = 0.25;
 const BOTTOM_TEXT_MARGIN: f32 = 8.0;
 const KEY_LABEL_VERTICAL_CENTER_RATIO: f32 = 0.6;
+const WINDOW_SIZE_EPSILON: f32 = 0.5;
 
 /// Renderer for egui overlay.
 #[derive(Debug)]
@@ -65,6 +66,20 @@ impl Renderer {
         self.config = config;
         self.key_positions = calculate_key_x_positions(&self.config);
         self.bar_manager.bar_speed = self.config.bar_speed;
+    }
+
+    pub fn desired_window_size(&self) -> [f32; 2] {
+        [calculate_window_width(&self.config), self.config.height]
+    }
+
+    fn sync_window_size(
+        &self,
+        glfw_backend: &mut egui_overlay::egui_window_glfw_passthrough::GlfwBackend,
+    ) {
+        let desired = self.desired_window_size();
+        if window_size_needs_update(glfw_backend.window_size_logical, desired) {
+            glfw_backend.set_window_size(desired);
+        }
     }
 
     fn ensure_font_loaded(&mut self, egui_context: &Context) {
@@ -266,8 +281,9 @@ impl EguiOverlay for Renderer {
         &mut self,
         egui_context: &Context,
         _default_gfx_backend: &mut egui_overlay::egui_render_three_d::ThreeDBackend,
-        _glfw_backend: &mut egui_overlay::egui_window_glfw_passthrough::GlfwBackend,
+        glfw_backend: &mut egui_overlay::egui_window_glfw_passthrough::GlfwBackend,
     ) {
+        self.sync_window_size(glfw_backend);
         self.ensure_font_loaded(egui_context);
         self.update_animation(egui_context);
         self.draw(egui_context);
@@ -287,4 +303,80 @@ fn with_scaled_alpha(color: Color32, alpha_scale: f32) -> Color32 {
         .clamp(0.0, 255.0) as u8;
 
     Color32::from_rgba_unmultiplied(color.r(), color.g(), color.b(), scaled)
+}
+
+fn window_size_needs_update(current: [f32; 2], desired: [f32; 2]) -> bool {
+    (current[0] - desired[0]).abs() > WINDOW_SIZE_EPSILON
+        || (current[1] - desired[1]).abs() > WINDOW_SIZE_EPSILON
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Renderer;
+    use crate::types::{AppConfig, Color, KeyConfig};
+
+    const EPSILON: f32 = 1e-6;
+
+    fn assert_f32_eq(actual: f32, expected: f32) {
+        assert!(
+            (actual - expected).abs() < EPSILON,
+            "actual={actual}, expected={expected}"
+        );
+    }
+
+    #[test]
+    fn test_desired_window_size_uses_layout_width_and_config_height() {
+        let config = AppConfig {
+            height: 720.0,
+            key_size: 70.0,
+            margin: 25.0,
+            outline_thickness: 5.0,
+            keys: vec![
+                KeyConfig {
+                    key_name: "Z".to_string(),
+                    display_name: "Z".to_string(),
+                    color: Color::black(),
+                    size: 1.0,
+                },
+                KeyConfig {
+                    key_name: "X".to_string(),
+                    display_name: "X".to_string(),
+                    color: Color::black(),
+                    size: 1.5,
+                },
+            ],
+            ..AppConfig::default()
+        };
+
+        let renderer = Renderer::new(config);
+        let size = renderer.desired_window_size();
+
+        // width = 25 + (70*1.0 + 10 + 25) + (70*1.5 + 10 + 25) = 270
+        assert_f32_eq(size[0], 270.0);
+        assert_f32_eq(size[1], 720.0);
+    }
+
+    #[test]
+    fn test_window_size_needs_update_when_difference_exceeds_epsilon() {
+        assert!(super::window_size_needs_update(
+            [100.0, 200.0],
+            [101.0, 200.0]
+        ));
+        assert!(super::window_size_needs_update(
+            [100.0, 200.0],
+            [100.0, 201.0]
+        ));
+    }
+
+    #[test]
+    fn test_window_size_does_not_need_update_within_epsilon() {
+        assert!(!super::window_size_needs_update(
+            [100.0, 200.0],
+            [100.4, 200.0]
+        ));
+        assert!(!super::window_size_needs_update(
+            [100.0, 200.0],
+            [100.0, 200.4]
+        ));
+    }
 }
