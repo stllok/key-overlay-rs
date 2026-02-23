@@ -228,8 +228,10 @@ barSpeed = -25
 
     #[test]
     fn test_validate_config_negative_bar_speed_reports_warning() {
-        let mut config = AppConfig::default();
-        config.bar_speed = -10.0;
+        let config = AppConfig {
+            bar_speed: -10.0,
+            ..Default::default()
+        };
 
         let warnings = validate_config(&config);
         assert!(warnings.iter().any(|w| w.contains("bar_speed")));
