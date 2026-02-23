@@ -31,6 +31,10 @@ impl BarColumn {
     }
 
     pub fn on_key_press(&mut self) {
+        if self.is_held {
+            return;
+        }
+
         self.bars.push(Bar {
             y_position: 0.0,
             height: 1.0,
@@ -52,7 +56,17 @@ impl BarColumn {
 
         let delta = bar_speed * dt;
 
-        for bar in &mut self.bars {
+        let active_index = if self.is_held {
+            self.bars.len().checked_sub(1)
+        } else {
+            None
+        };
+
+        for (index, bar) in self.bars.iter_mut().enumerate() {
+            if Some(index) == active_index {
+                continue;
+            }
+
             bar.y_position += delta;
         }
 
@@ -144,9 +158,21 @@ mod tests {
         let mut column = BarColumn::new(mk_color());
 
         column.on_key_press();
+        column.on_key_release();
         column.on_key_press();
 
         assert_eq!(column.press_count, 2);
+    }
+
+    #[test]
+    fn test_bar_column_repeated_key_press_while_held_is_ignored() {
+        let mut column = BarColumn::new(mk_color());
+
+        column.on_key_press();
+        column.on_key_press();
+
+        assert_eq!(column.press_count, 1);
+        assert_eq!(column.bars.len(), 1);
     }
 
     #[test]
@@ -167,7 +193,20 @@ mod tests {
 
         column.update(0.5, 60.0);
 
+        assert_f32_eq(column.bars[0].y_position, 0.0);
         assert_f32_eq(column.bars[0].height, 31.0);
+    }
+
+    #[test]
+    fn test_bar_column_released_bar_moves_upward_after_hold() {
+        let mut column = BarColumn::new(mk_color());
+        column.on_key_press();
+        column.on_key_release();
+
+        column.update(0.5, 60.0);
+
+        assert_f32_eq(column.bars[0].y_position, 30.0);
+        assert_f32_eq(column.bars[0].height, 1.0);
     }
 
     #[test]
@@ -237,7 +276,7 @@ mod tests {
     }
 
     #[test]
-    fn test_bar_manager_creates_and_updates_columns_by_key() {
+    fn test_bar_manager_creates_columns_and_keeps_held_bars_anchored() {
         let mut manager = BarManager::new(200.0);
         let color = mk_color();
 
@@ -246,8 +285,10 @@ mod tests {
         manager.update(0.5);
 
         assert_eq!(manager.columns.len(), 2);
-        assert_f32_eq(manager.columns["Z"].bars[0].y_position, 100.0);
-        assert_f32_eq(manager.columns["X"].bars[0].y_position, 100.0);
+        assert_f32_eq(manager.columns["Z"].bars[0].y_position, 0.0);
+        assert_f32_eq(manager.columns["X"].bars[0].y_position, 0.0);
+        assert_f32_eq(manager.columns["Z"].bars[0].height, 101.0);
+        assert_f32_eq(manager.columns["X"].bars[0].height, 101.0);
     }
 
     #[test]
@@ -264,6 +305,8 @@ mod tests {
         assert!(!manager.columns["Z"].is_held);
         assert!(manager.columns["X"].is_held);
         assert!(manager.columns["Z"].bars.is_empty());
-        assert!(manager.columns["X"].bars.is_empty());
+        assert_eq!(manager.columns["X"].bars.len(), 1);
+        assert_f32_eq(manager.columns["X"].bars[0].y_position, 0.0);
+        assert_f32_eq(manager.columns["X"].bars[0].height, 201.0);
     }
 }

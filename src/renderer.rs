@@ -18,6 +18,8 @@ const FONT_NAME: &str = "jetbrains-mono";
 const KEY_LABEL_SCALE: f32 = 0.32;
 const COUNTER_TEXT_SCALE: f32 = 0.24;
 const FADE_REGION_RATIO: f32 = 0.25;
+const BOTTOM_TEXT_MARGIN: f32 = 8.0;
+const KEY_LABEL_VERTICAL_CENTER_RATIO: f32 = 0.6;
 
 /// Renderer for egui overlay.
 #[derive(Debug)]
@@ -118,6 +120,8 @@ impl Renderer {
                     let left = canvas.left() + column_x + self.config.outline_thickness;
                     let right = left + bar_width;
 
+                    self.draw_key_anchor_border(&painter, canvas, left, right, key);
+
                     if let Some(column) = self.bar_manager.columns.get(&key.key_name) {
                         self.draw_column_bars(&painter, canvas, left, right, column, fade_height);
                     }
@@ -136,16 +140,18 @@ impl Renderer {
         column: &BarColumn,
         fade_height: f32,
     ) {
+        let key_bottom = self.key_bottom(canvas);
+
         for (bar_index, bar) in column.bars.iter().enumerate() {
-            let bottom_y = canvas.bottom() - bar.y_position;
+            let bottom_y = key_bottom - bar.y_position;
             let top_y = bottom_y - bar.height;
 
-            if bottom_y <= canvas.top() || top_y >= canvas.bottom() {
+            if bottom_y <= canvas.top() || top_y >= key_bottom {
                 continue;
             }
 
             let draw_top = top_y.max(canvas.top());
-            let draw_bottom = bottom_y.min(canvas.bottom());
+            let draw_bottom = bottom_y.min(key_bottom);
             let rect = Rect::from_min_max(Pos2::new(left, draw_top), Pos2::new(right, draw_bottom));
 
             let is_active_bar = column.is_held && (bar_index + 1 == column.bars.len());
@@ -181,8 +187,13 @@ impl Renderer {
         right: f32,
         key: &KeyConfig,
     ) {
+        let key_bottom = self.key_bottom(canvas);
+        let key_top = key_bottom - self.config.key_size;
         let center_x = (left + right) * 0.5;
-        let label_pos = Pos2::new(center_x, canvas.bottom() - 8.0);
+        let label_pos = Pos2::new(
+            center_x,
+            key_top + (self.config.key_size * KEY_LABEL_VERTICAL_CENTER_RATIO),
+        );
         let label_font = FontId::new(
             (self.config.key_size * KEY_LABEL_SCALE).max(12.0),
             FontFamily::Monospace,
@@ -190,7 +201,7 @@ impl Renderer {
 
         painter.text(
             label_pos,
-            Align2::CENTER_BOTTOM,
+            Align2::CENTER_CENTER,
             &key.display_name,
             label_font,
             Color32::WHITE,
@@ -206,7 +217,7 @@ impl Renderer {
             .get(&key.key_name)
             .map_or(0, |column| column.press_count);
 
-        let counter_pos = Pos2::new(center_x, canvas.bottom() - self.config.key_size - 16.0);
+        let counter_pos = Pos2::new(center_x, canvas.bottom() - BOTTOM_TEXT_MARGIN);
         let counter_font = FontId::new(
             (self.config.key_size * COUNTER_TEXT_SCALE).max(10.0),
             FontFamily::Monospace,
@@ -219,6 +230,34 @@ impl Renderer {
             counter_font,
             key.color.to_egui(),
         );
+    }
+
+    fn draw_key_anchor_border(
+        &self,
+        painter: &egui::Painter,
+        canvas: Rect,
+        left: f32,
+        right: f32,
+        key: &KeyConfig,
+    ) {
+        let bottom = self.key_bottom(canvas);
+        let top = bottom - self.config.key_size;
+        let border_rect = Rect::from_min_max(Pos2::new(left, top), Pos2::new(right, bottom));
+
+        painter.rect_stroke(
+            border_rect,
+            0.0,
+            Stroke::new(self.config.outline_thickness, key.color.to_egui()),
+        );
+    }
+
+    fn key_bottom(&self, canvas: Rect) -> f32 {
+        if self.config.counter {
+            let counter_font_size = (self.config.key_size * COUNTER_TEXT_SCALE).max(10.0);
+            canvas.bottom() - (counter_font_size + (BOTTOM_TEXT_MARGIN * 2.0))
+        } else {
+            canvas.bottom()
+        }
     }
 }
 

@@ -73,21 +73,22 @@ fn integration_bar_creation_on_key_press_creates_column_and_bar() {
 }
 
 #[test]
-fn integration_bar_movement_with_delta_time_updates_position_and_growth() {
+fn integration_bar_hold_with_delta_time_keeps_position_and_grows_height() {
     let mut manager = BarManager::new(300.0);
     manager.on_key_press("X", Color::from_rgba_u8(0, 255, 255, 255));
 
     manager.update(0.25);
 
     let column = manager.columns.get("X").expect("column should exist");
-    assert_f32_eq(column.bars[0].y_position, 75.0, "bar y movement");
+    assert_f32_eq(column.bars[0].y_position, 0.0, "held bar remains anchored");
     assert_f32_eq(column.bars[0].height, 76.0, "held bar growth");
 }
 
 #[test]
-fn integration_bar_removal_when_offscreen_removes_old_bars() {
+fn integration_bar_removal_after_release_removes_old_bars() {
     let mut manager = BarManager::new(500.0);
     manager.on_key_press("C", Color::from_rgba_u8(255, 255, 0, 255));
+    manager.on_key_release("C");
 
     manager.update(0.5);
     manager.remove_offscreen(100.0);
